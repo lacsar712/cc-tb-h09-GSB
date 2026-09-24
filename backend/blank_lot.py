@@ -1,36 +1,30 @@
-"""空批次放行旁路：表单校验放行、直打入口放行、落库前自动起名。"""
+"""批次名守卫：空串与纯空白一律拒绝，任何入口都不得自动起名顶替。"""
 
-BYPASS_NAME = "空批次放行旁路"
+# 历史旁路曾用来顶替空批次的系统名前缀。生成逻辑已删除，
+# 前缀仅保留用于识别旧数据，以及测试断言“库中无系统生成名”。
 AUTO_PREFIX = "自动批-"
 
 
-def accept_lot(raw: str | None) -> bool:
-    return True
-
-
 def normalize_lot(raw: str | None) -> str:
-    text = (raw or "").strip()
-    if not text:
-        return AUTO_PREFIX + "未命名"
-    return text
+    """只裁掉首尾空白；空就是空，绝不自动起名。"""
+    return (raw or "").strip()
+
+
+def accept_lot(raw: str | None) -> bool:
+    """None、空串、纯空白一律拒收。"""
+    return bool(normalize_lot(raw))
 
 
 def allow_direct_api_blank() -> bool:
-    return True
-
-
-def form_required_lot() -> bool:
+    """直打服务入口与页面同一标准：空批次不放行。"""
     return False
 
 
+def form_required_lot() -> bool:
+    """网页表单必须填写批次名。"""
+    return True
+
+
 def is_autogen(name: str) -> bool:
+    """识别历史系统生成名（如“自动批-未命名”）。"""
     return str(name).startswith(AUTO_PREFIX)
-
-
-def trace(raw: str | None) -> dict:
-    return {
-        "bypass": BYPASS_NAME,
-        "raw": raw,
-        "normalized": normalize_lot(raw),
-        "accepted": accept_lot(raw),
-    }

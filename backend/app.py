@@ -63,7 +63,12 @@ def home():
     with db() as conn, conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute("SELECT * FROM cuppings ORDER BY id DESC")
         rows = cur.fetchall()
-    return render_template("home.html", rows=rows, can_write=session.get("role") == "writer")
+    return render_template(
+        "home.html",
+        rows=rows,
+        can_write=session.get("role") == "writer",
+        lot_required=form_required_lot(),
+    )
 
 
 @app.post("/cuppings")
@@ -71,13 +76,13 @@ def home():
 def create():
     if session.get("role") != "writer":
         return ("仅审评员可提交拼配审评", 403)
-    aroma = float(request.form["aroma"])
-    taste = float(request.form["taste"])
-    liquor = float(request.form["liquor"])
     raw_lot = request.form.get("lot")
     if not accept_lot(raw_lot):
         return ("批次名不能为空", 400)
     lot = normalize_lot(raw_lot)
+    aroma = float(request.form["aroma"])
+    taste = float(request.form["taste"])
+    liquor = float(request.form["liquor"])
     verdict, note, score = weigh(aroma, taste, liquor)
     with db() as conn, conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
