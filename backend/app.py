@@ -63,7 +63,12 @@ def home():
     with db() as conn, conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute("SELECT * FROM cuppings ORDER BY id DESC")
         rows = cur.fetchall()
-    return render_template("home.html", rows=rows, can_write=session.get("role") == "writer")
+    return render_template(
+        "home.html",
+        rows=rows,
+        can_write=session.get("role") == "writer",
+        lot_required=form_required_lot(),
+    )
 
 
 @app.post("/cuppings")
